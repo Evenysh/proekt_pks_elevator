@@ -1,0 +1,11 @@
+build/
+.cache/
+*.exe
+*.o
+*.obj
+CMakeFiles/
+cmake_install.cmake
+Makefile
+.ninja_deps
+.ninja_log
+
