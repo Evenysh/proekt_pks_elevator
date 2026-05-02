@@ -84,31 +84,31 @@ build/Release/elevator_sim.exe
 ## Пример запуска
 
 ```
-=== Elevator Building Simulator ===
+=== Симулятор работы лифтов в здании ===
 
-Number of floors    (2-20): 10
-Number of elevators (1-5):  2
-[Simulation] Started: 2 elevator(s), 10 floors.
+Количество этажей    (2-20): 10
+Количество лифтов     (1-5): 2
+[Симуляция] Запущена: 2 лифт(а), 10 этаж(ей).
 
-[1] Call elevator   [2] Show status   [3] Exit
-Choice: 1
-From floor (1-10): 1
-To   floor (1-10): 7
-[UI] Request accepted. Enter '2' to check elevator status.
-[Controller] Elevator 1 assigned: floor 1 -> floor 7
-  [Elevator 1] Moving UP   -> Floor 2
-  [Elevator 1] Moving UP   -> Floor 3
+[1] Вызвать лифт   [2] Показать статус   [3] Выход
+Выбор: 1
+С этажа (1-10): 1
+На этаж (1-10): 7
+[UI] Заявка принята. Введите '2' для просмотра статуса лифтов.
+[Диспетчер] Лифт 1 назначен: этаж 1 -> этаж 7
+  [Лифт 1] Движение ВВЕРХ  -> Этаж 2
+  [Лифт 1] Движение ВВЕРХ  -> Этаж 3
   ...
-  [Elevator 1] Arrived at floor 7  --  DOORS OPEN
-  [Elevator 1] Floor 7  --  DOORS CLOSED
+  [Лифт 1] Прибыл на этаж 7  --  ДВЕРИ ОТКРЫТЫ
+  [Лифт 1] Этаж 7  --  ДВЕРИ ЗАКРЫТЫ
 
-[1] Call elevator   [2] Show status   [3] Exit
-Choice: 2
+[1] Вызвать лифт   [2] Показать статус   [3] Выход
+Выбор: 2
 
---- Elevator Status ---
-  Elevator 1  |  Floor:  7  |  IDLE
-  Elevator 2  |  Floor:  1  |  IDLE
------------------------
+--- Статус лифтов ---
+  Лифт 1  |  Этаж:  7  |  ОЖИДАНИЕ
+  Лифт 2  |  Этаж:  1  |  ОЖИДАНИЕ
+---------------------
 ```
 
 ---
