@@ -1,6 +1,6 @@
 #include "Simulation.h"
+#include "ConsoleLog.h"
 #include <algorithm>
-#include <iostream>
 #include <stdexcept>
 #include <string>
 
@@ -23,9 +23,12 @@ void Simulation::start() {
 
     controllerThread = std::thread([this]() { controller.monitorSystem(); });
 
-    std::cout << "[Симуляция] Запущена: "
-              << building->getElevators().size() << " лифт(а), "
-              << building->getFloorsCount()       << " этаж(ей).\n";
+    ConsoleLog::sync([this](std::ostream& os) {
+        os << "------------------------------------------------------------\n";
+        os << "  [симуляция] Запущена: " << building->getElevators().size()
+           << " лифт(ов), " << building->getFloorsCount() << " этаж(ей).\n";
+        os << "------------------------------------------------------------\n";
+    });
 }
 
 // ------------------------------------------------------------------
@@ -38,7 +41,11 @@ void Simulation::stop() {
     for (auto& t : elevatorThreads)
         if (t.joinable()) t.join();
 
-    std::cout << "[Симуляция] Остановлена.\n";
+    ConsoleLog::sync([](std::ostream& os) {
+        os << "\n------------------------------------------------------------\n";
+        os << "  [симуляция] Остановлена.\n";
+        os << "------------------------------------------------------------\n";
+    });
 }
 
 // ------------------------------------------------------------------

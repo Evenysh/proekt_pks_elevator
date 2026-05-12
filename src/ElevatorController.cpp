@@ -1,7 +1,7 @@
 #include "ElevatorController.h"
+#include "ConsoleLog.h"
 #include <climits>
 #include <cstdlib>
-#include <iostream>
 
 // ---- NearestElevatorStrategy (стратегия «ближайший лифт») ---------------
 std::shared_ptr<Elevator> NearestElevatorStrategy::selectElevator(
@@ -49,7 +49,9 @@ void ElevatorController::addRequest(std::shared_ptr<Request> request) {
 void ElevatorController::assignElevator(std::shared_ptr<Request> request) {
     auto elev = strategy->selectElevator(elevators, *request);
     if (!elev) {
-        std::cout << "[Диспетчер] Нет доступных лифтов!\n";
+        ConsoleLog::sync([](std::ostream& os) {
+            os << "  [диспетчер] Ошибка: нет доступных лифтов.\n";
+        });
         return;
     }
 
@@ -57,9 +59,12 @@ void ElevatorController::assignElevator(std::shared_ptr<Request> request) {
     elev->addTargetFloor(request->getSourceFloor());
     elev->addTargetFloor(request->getTargetFloor());
 
-    std::cout << "[Диспетчер] Лифт " << elev->getId()
-              << " назначен: этаж " << request->getSourceFloor()
-              << " -> этаж "        << request->getTargetFloor() << "\n";
+    const int eid = elev->getId();
+    const int src = request->getSourceFloor();
+    const int dst = request->getTargetFloor();
+    ConsoleLog::sync([eid, src, dst](std::ostream& os) {
+        os << "  [диспетчер] Лифт " << eid << ": этаж " << src << " -> этаж " << dst << "\n";
+    });
 }
 
 // ------------------------------------------------------------------

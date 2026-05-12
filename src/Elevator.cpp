@@ -1,8 +1,9 @@
 #include "Elevator.h"
+#include "ConsoleLog.h"
 #include <chrono>
 #include <climits>
 #include <cstdlib>
-#include <iostream>
+#include <iomanip>
 #include <thread>
 
 Elevator::Elevator(int id, int initialFloor)
@@ -57,9 +58,12 @@ void Elevator::run() {
                 std::lock_guard<std::mutex> lock(mtx);
                 state = ElevatorState::DOORS_OPEN;
             }
-            std::cout << "  [Лифт " << id
-                      << "] Прибыл на этаж " << cur
-                      << "  --  ДВЕРИ ОТКРЫТЫ\n";
+            const int lid = id;
+            const int floorOpen = cur;
+            ConsoleLog::sync([lid, floorOpen](std::ostream& os) {
+                os << "      [лифт " << std::setw(2) << lid << "]  прибыл на этаж "
+                   << std::setw(2) << floorOpen << "  |  двери ОТКРЫТЫ\n";
+            });
 
             std::this_thread::sleep_for(std::chrono::milliseconds(1200));
 
@@ -70,9 +74,10 @@ void Elevator::run() {
                         ? ElevatorState::IDLE
                         : ElevatorState::IDLE; // остаёмся в IDLE; направление на следующей итерации
             }
-            std::cout << "  [Лифт " << id
-                      << "] Этаж " << cur
-                      << "  --  ДВЕРИ ЗАКРЫТЫ\n";
+            ConsoleLog::sync([lid, floorOpen](std::ostream& os) {
+                os << "      [лифт " << std::setw(2) << lid << "]  этаж "
+                   << std::setw(2) << floorOpen << "  |  двери ЗАКРЫТЫ\n";
+            });
 
         // ---- Сдвиг на один этаж к цели --------------------------------------
         } else if (target > cur) {
@@ -82,8 +87,12 @@ void Elevator::run() {
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(700));
             ++currentFloor;
-            std::cout << "  [Лифт " << id
-                      << "] Движение ВВЕРХ  -> Этаж " << currentFloor.load() << "\n";
+            const int lid = id;
+            const int fl = currentFloor.load();
+            ConsoleLog::sync([lid, fl](std::ostream& os) {
+                os << "      [лифт " << std::setw(2) << lid << "]  ВВЕРХ   ->  этаж "
+                   << std::setw(2) << fl << "\n";
+            });
 
         } else {
             {
@@ -92,8 +101,12 @@ void Elevator::run() {
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(700));
             --currentFloor;
-            std::cout << "  [Лифт " << id
-                      << "] Движение ВНИЗ   -> Этаж " << currentFloor.load() << "\n";
+            const int lid = id;
+            const int fl = currentFloor.load();
+            ConsoleLog::sync([lid, fl](std::ostream& os) {
+                os << "      [лифт " << std::setw(2) << lid << "]  ВНИЗ    ->  этаж "
+                   << std::setw(2) << fl << "\n";
+            });
         }
 
         // После шага — IDLE, если очередь этажей пуста

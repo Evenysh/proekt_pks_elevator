@@ -3,6 +3,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #endif
+#include "ConsoleLog.h"
 #include "Simulation.h"
 #include "UserInterface.h"
 
@@ -11,7 +12,12 @@ int main() {
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 #endif
-    std::cout << "=== Симулятор работы лифтов в здании ===\n\n";
+    ConsoleLog::syncUi([](std::ostream& os) {
+        os << "\n";
+        os << "============================================================\n";
+        os << "  Симулятор работы лифтов в здании\n";
+        os << "============================================================\n\n";
+    });
 
     int floors = 0, elevatorCount = 0;
     UserInterface::getInputParameters(floors, elevatorCount);
