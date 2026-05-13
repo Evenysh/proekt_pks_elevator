@@ -20,6 +20,50 @@ inline LogState& state() {
     return s;
 }
 
+#ifdef ELEVATOR_QUIET_CONSOLE
+// Режим unit-тестов: не писать в std::cout из фоновых потоков (иначе ctest / пайп
+// может заблокироваться при полном буфере — зависание на «Start 1: …»).
+inline void beginUiInput() {
+    std::lock_guard<std::mutex> lock(state().mtx);
+    if (++state().uiDepth == 1) state().deferLogs = true;
+}
+
+inline void endUiInput() {
+    std::lock_guard<std::mutex> lock(state().mtx);
+    if (--state().uiDepth < 0) state().uiDepth = 0;
+    if (state().uiDepth == 0) {
+        state().deferred.clear();
+        state().deferLogs = false;
+    }
+}
+
+class UiInputSession {
+public:
+    UiInputSession() { beginUiInput(); }
+    ~UiInputSession() { endUiInput(); }
+    UiInputSession(const UiInputSession&) = delete;
+    UiInputSession& operator=(const UiInputSession&) = delete;
+};
+
+template <typename Fn>
+inline void sync(Fn&& fn) {
+    std::lock_guard<std::mutex> lock(state().mtx);
+    if (state().deferLogs) {
+        std::ostringstream oss;
+        fn(oss);
+        state().deferred.push_back(oss.str());
+    } else {
+        (void)fn;
+    }
+}
+
+template <typename Fn>
+inline void syncUi(Fn&& fn) {
+    (void)fn;
+}
+
+#else
+
 inline void beginUiInput() {
     std::lock_guard<std::mutex> lock(state().mtx);
     if (++state().uiDepth == 1) state().deferLogs = true;
@@ -40,7 +84,6 @@ inline void endUiInput() {
     std::cout.flush();
 }
 
-// RAII: пока объект жив — сообщения из sync() не попадают на экран сразу, а копятся.
 class UiInputSession {
 public:
     UiInputSession() { beginUiInput(); }
@@ -49,7 +92,6 @@ public:
     UiInputSession& operator=(const UiInputSession&) = delete;
 };
 
-// Лог лифтов / диспетчера: во время ввода пользователя буферизуется, иначе — сразу в консоль.
 template <typename Fn>
 inline void sync(Fn&& fn) {
     std::lock_guard<std::mutex> lock(state().mtx);
@@ -63,12 +105,13 @@ inline void sync(Fn&& fn) {
     }
 }
 
-// Меню и подсказки: всегда на экран сразу (даже во время сессии ввода).
 template <typename Fn>
 inline void syncUi(Fn&& fn) {
     std::lock_guard<std::mutex> lock(state().mtx);
     fn(std::cout);
     std::cout.flush();
 }
+
+#endif
 
 }  // namespace ConsoleLog

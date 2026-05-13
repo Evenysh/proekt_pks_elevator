@@ -24,6 +24,7 @@
 ├── CMakeLists.txt
 ├── README.md
 ├── include/
+│   ├── ConsoleLog.h
 │   ├── IObserver.h
 │   ├── Request.h
 │   ├── Elevator.h
@@ -31,14 +32,21 @@
 │   ├── ElevatorController.h
 │   ├── Simulation.h
 │   └── UserInterface.h
-└── src/
-    ├── main.cpp
-    ├── Request.cpp
-    ├── Elevator.cpp
-    ├── Building.cpp
-    ├── ElevatorController.cpp
-    ├── Simulation.cpp
-    └── UserInterface.cpp
+├── src/
+│   ├── main.cpp
+│   ├── Request.cpp
+│   ├── Elevator.cpp
+│   ├── Building.cpp
+│   ├── ElevatorController.cpp
+│   ├── Simulation.cpp
+│   └── UserInterface.cpp
+├── tests/                    # unit-тесты Catch2 (ПЗ №4)
+│   ├── CMakeLists.txt
+│   ├── test_*.cpp
+│   └── Тестовые_сценарии.txt
+└── scenarios/                # мини-программы сценариев (ПЗ №4)
+    ├── CMakeLists.txt
+    └── scenario_*.cpp
 ```
 
 ---
@@ -49,7 +57,7 @@
 
 | Инструмент | Версия |
 |---|---|
-| CMake | >= 3.10 |
+| CMake | >= 3.14 (нужен для FetchContent Catch2) |
 | Компилятор C++ | GCC 7+ / Clang 5+ / MSVC 2017+ (C++17) |
 
 ### Команды сборки
@@ -78,6 +86,23 @@ build/Release/elevator_sim.exe
 ```
 
 В Git Bash из корня проекта: `./build/Debug/elevator_sim.exe` (или `./build/Release/elevator_sim.exe`).
+
+Первый запуск `cmake` скачивает Catch2 с GitHub (нужен интернет). Отключить тесты: `-DELEVATOR_BUILD_TESTS=OFF`; отключить мини-сценарии: `-DELEVATOR_BUILD_SCENARIOS=OFF`.
+
+### Тестирование (практическое занятие №4)
+
+```bash
+cmake -S . -B build
+cmake --build build
+cd build
+ctest --output-on-failure    # или ./tests/elevator_tests
+./scenarios/scenario_building
+./scenarios/scenario_request
+./scenarios/scenario_strategy
+./scenarios/scenario_simulation_lifecycle
+```
+
+Список сценариев и пояснения: `tests/Тестовые_сценарии.txt`.
 
 ---
 
