@@ -147,3 +147,25 @@ ctest --output-on-failure    # или ./tests/elevator_tests
 Все остальные зависимости — стандартная библиотека C++17.
 
 
+cd "/Users/evenysh/Documents/RTU MIREA/2 курс/2 семестр/Программирование корпоративных систем/КР_3/Proekt_pks_elevator"
+
+cmake -S . -B build
+cmake --build build
+
+
+Автоматические unit-тесты (Catch2)
+
+cd build
+ctest --output-on-failure
+
+Сценарий 1: создание здания с допустимыми параметрами (мини-программа).
+./scenarios/scenario_building
+
+Сценарий 2: проверка заявок Request (валидация границ).
+./scenarios/scenario_request
+
+Сценарий 3: диспетчеризация — какой лифт выберет стратегия «ближайший».
+./scenarios/scenario_strategy
+
+Сценарий 4: жизненный цикл симуляции — старт, короткая работа, останов.
+./scenarios/scenario_simulation_lifecycle
