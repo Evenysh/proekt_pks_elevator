@@ -1,8 +1,9 @@
 include(FetchContent)
+# GIT вместо URL+zip: CMake 3.22 в Ubuntu 22.04 (Docker) падает на DOWNLOAD_EXTRACT_TIMESTAMP
 FetchContent_Declare(
     Catch2
-    URL https://github.com/catchorg/Catch2/archive/refs/tags/v3.5.4.zip
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+    GIT_TAG        v3.5.4
 )
 FetchContent_MakeAvailable(Catch2)
 

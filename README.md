@@ -22,6 +22,8 @@
 ```
 .
 ├── CMakeLists.txt
+├── Dockerfile              # контейнеризация (ПЗ «Контейнеризация»)
+├── .dockerignore
 ├── README.md
 ├── include/
 │   ├── ConsoleLog.h
@@ -68,6 +70,15 @@ cmake --build build
 ```
 
 ### Запуск
+
+Без аргументов программа спрашивает число этажей и лифтов с клавиатуры.
+Можно передать параметры сразу:
+
+```bash
+./build/elevator_sim 10 2
+./build/elevator_sim --floors 10 --elevators 2
+./build/elevator_sim --help
+```
 
 ```bash
 # Linux / macOS
@@ -144,28 +155,113 @@ ctest --output-on-failure    # или ./tests/elevator_tests
 |---|---|---|
 | **Threads** (pthreads / WinThreads) | Многопоточность (`std::thread`, `std::mutex`, `std::condition_variable`) | `find_package(Threads REQUIRED)` в CMakeLists.txt |
 
-Все остальные зависимости — стандартная библиотека C++17.
+Все остальные зависимости — стандартная библиотека C++17.  
 
+В Docker Catch2 подтягивается при сборке через `FetchContent` (см. `tests/CMakeLists.txt`).
 
-cd "/Users/evenysh/Documents/RTU MIREA/2 курс/2 семестр/Программирование корпоративных систем/КР_3/Proekt_pks_elevator"
+---
 
-cmake -S . -B build
-cmake --build build
+## Контейнеризация (Docker)
 
+Практическое задание: сборка и тесты в **чистой Linux** (Ubuntu 22.04), без установки
+компилятора на хост-машину. Используется **multi-stage**-сборка: этап `builder` компилирует
+проект и прогоняет Catch2; этап `runtime` содержит только готовые бинарники и `libstdc++6`.
 
-Автоматические unit-тесты (Catch2)
+### Требования на хосте
 
-cd build
-ctest --output-on-failure
+| Инструмент | Назначение |
+|---|---|
+| [Docker](https://www.docker.com/) | Сборка и запуск образа |
+| Интернет | При `docker build` скачивается Catch2 с GitHub |
 
-Сценарий 1: создание здания с допустимыми параметрами (мини-программа).
-./scenarios/scenario_building
+Все зависимости для **сборки внутри контейнера** перечислены в `Dockerfile`
+(`build-essential`, `cmake`, `git`, `ca-certificates`).
 
-Сценарий 2: проверка заявок Request (валидация границ).
-./scenarios/scenario_request
+### 1. Сборка образа
 
-Сценарий 3: диспетчеризация — какой лифт выберет стратегия «ближайший».
-./scenarios/scenario_strategy
+Выполнять из **корня репозитория** (где лежат `Dockerfile` и `CMakeLists.txt`):
 
-Сценарий 4: жизненный цикл симуляции — старт, короткая работа, останов.
-./scenarios/scenario_simulation_lifecycle
+```bash
+docker build -t elevator-sim:latest .
+```
+
+**Что происходит:** Docker создаёт образ `elevator-sim:latest`. На этапе `builder` выполняются
+`cmake`, компиляция и **`ctest --output-on-failure`**. Если хотя бы один тест Catch2 падает,
+сборка образа **прерывается с ошибкой** — это и есть проверка тестов в контейнере.
+В финальный образ попадают только `elevator_sim`, `elevator_tests` и мини-сценарии, без
+исходников и папки `build/`.
+
+### 2. Запуск симулятора (основная функция)
+
+Интерактивный режим (`-it` — терминал + ввод с клавиатуры). Флаг `--init` рекомендуется,
+чтобы Ctrl+C корректно завершал процесс в контейнере:
+
+```bash
+docker run -it --rm --init elevator-sim:latest --floors 10 --elevators 2
+```
+
+Альтернативные форматы аргументов (то же, что у локального `./elevator_sim`):
+
+```bash
+docker run -it --rm --init elevator-sim:latest 10 2
+docker run -it --rm --init elevator-sim:latest -f 10 -e 2
+```
+
+| Флаг / аргумент | Пояснение |
+|---|---|
+| `-it` | Интерактивный TTY: меню, ввод этажей |
+| `--rm` | Удалить контейнер после выхода |
+| `--init` | Корректная передача сигналов (Ctrl+C); без него удобнее выходить через меню `3` |
+| `--floors 10 --elevators 2` | Параметры здания без запроса с клавиатуры |
+
+**Штатный выход из программы:** в меню выбрать `3` и Enter.
+
+Быстрая демонстрация без ручного ввода в меню (сразу выход):
+
+```bash
+printf '3\n' | docker run -i --rm elevator-sim:latest 10 2
+```
+
+Здесь `-i` достаточно (без `-t`), потому что ввод идёт через pipe, а не с клавиатуры.
+
+### 3. Повторный запуск unit-тестов Catch2
+
+Тесты уже выполняются при `docker build`; отдельно их можно показать в **готовом** образе:
+
+```bash
+docker run --rm --entrypoint /usr/local/bin/elevator_tests elevator-sim:latest
+```
+
+`--entrypoint` подменяет точку входа (по умолчанию — `elevator_sim`), чтобы запустить
+только тестовый исполняемый файл. Ожидаемый результат — сообщение Catch2 об успешном
+прохождении всех тестов (код выхода 0).
+
+### 4. Мини-сценарии (ПЗ №4) внутри контейнера
+
+В образе лежат бинарники в `/usr/local/bin/scenarios/`:
+
+```bash
+docker run --rm --entrypoint /usr/local/bin/scenarios/scenario_building elevator-sim:latest
+docker run --rm --entrypoint /usr/local/bin/scenarios/scenario_request elevator-sim:latest
+docker run --rm --entrypoint /usr/local/bin/scenarios/scenario_strategy elevator-sim:latest
+docker run --rm --entrypoint /usr/local/bin/scenarios/scenario_simulation_lifecycle elevator-sim:latest
+```
+
+Каждая команда запускает одну мини-программу и завершается; в stdout должно быть `OK: ...`.
+
+### 5. Справка по аргументам в контейнере
+
+```bash
+docker run --rm elevator-sim:latest --help
+```
+
+### Соответствие заданию (кратко)
+
+| Требование | Реализация |
+|---|---|
+| Dockerfile, автосборка | `Dockerfile`, `docker build` |
+| Catch2 в контейнере | `ctest` при сборке; опционально `elevator_tests` при `docker run` |
+| Аргументы командной строки | `main.cpp`, передаются после имени образа в `docker run` |
+| Multi-stage, без артефактов сборки | Стадии `builder` / `runtime` |
+| Чистая Linux, явные зависимости | `FROM ubuntu:22.04`, `apt-get install ...` |
+| Рабочий контейнер | `docker run -it ... elevator-sim:latest` |
